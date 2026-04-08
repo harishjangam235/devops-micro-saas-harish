@@ -26,7 +26,12 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh 'mvn sonar:sonar'
+                    sh '''
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=devops-micro-saas-harish \
+                    -Dsonar.projectName=devops-micro-saas-harish \
+                    -Dsonar.host.url=http://host.docker.internal:9000
+                    '''
                 }
             }
         }
