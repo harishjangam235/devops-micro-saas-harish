@@ -26,7 +26,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 sh '''
-                mvn sonar:sonar \
+                mvn clean verify sonar:sonar \
                 -Dsonar.projectKey=devops-micro-saas-harish \
                 -Dsonar.projectName=devops-micro-saas-harish \
                 -Dsonar.host.url=http://host.docker.internal:9000
@@ -71,11 +71,11 @@ pipeline {
                 sh '''
                 docker stop micro-saas || true
                 docker rm micro-saas || true
-                docker container prune -f || true
                 docker run -d -p 8090:8080 --name micro-saas $DOCKER_IMAGE:latest
                 '''
             }
         }
+
     }
 
     post {
