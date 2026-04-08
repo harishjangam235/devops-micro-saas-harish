@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: micro-saas-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: micro-saas
+  template:
+    metadata:
+      labels:
+        app: micro-saas
+    spec:
+      containers:
+      - name: micro-saas-container
+        image: harishj235/devops-micro-saas-harish:latest
+        ports:
+        - containerPort: 8080
