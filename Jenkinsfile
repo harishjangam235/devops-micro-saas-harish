@@ -25,12 +25,15 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                sh '''
-                mvn clean verify sonar:sonar \
-                -Dsonar.projectKey=devops-micro-saas-harish \
-                -Dsonar.projectName=devops-micro-saas-harish \
-                -Dsonar.host.url=http://host.docker.internal:9000
-                '''
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                    mvn clean verify sonar:sonar \
+                    -Dsonar.projectKey=devops-micro-saas-harish \
+                    -Dsonar.projectName=devops-micro-saas-harish \
+                    -Dsonar.host.url=http://host.docker.internal:9000 \
+                    -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
             }
         }
 
