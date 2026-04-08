@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven'
+    }
+
+    environment {
+        DOCKER_IMAGE = "harishj235/devops-micro-saas-harish"
+    }
+
     stages {
 
         stage('Clone Repository') {
@@ -11,29 +19,53 @@ pipeline {
 
         stage('Build Application') {
             steps {
-                sh 'chmod +x mvnw'
-                sh './mvnw clean package'
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t harish-devops-app .'
+                sh 'docker build -t devops-micro-saas-harish .'
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Tag Docker Image') {
             steps {
-                sh 'docker stop devops-container || true'
-                sh 'docker rm devops-container || true'
+                sh 'docker tag devops-micro-saas-harish $DOCKER_IMAGE:latest'
             }
         }
 
-        stage('Run Container') {
+        stage('Push Docker Image') {
             steps {
-                sh 'docker run -d -p 8082:8080 --name devops-container harish-devops-app'
+                sh 'docker push $DOCKER_IMAGE:latest'
             }
         }
 
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                docker stop micro-saas || true
+                docker rm micro-saas || true
+                docker run -d -p 8082:8080 --name micro-saas $DOCKER_IMAGE:latest
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Please check logs.'
+        }
     }
 }
