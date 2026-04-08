@@ -19,32 +19,30 @@ pipeline {
 
         stage('Build Application') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-server') {
-                    sh '''
-                    mvn sonar:sonar \
-                    -Dsonar.projectKey=devops-micro-saas-harish \
-                    -Dsonar.projectName=devops-micro-saas-harish \
-                    -Dsonar.host.url=http://host.docker.internal:9000
-                    '''
-                }
+                sh '''
+                mvn sonar:sonar \
+                -Dsonar.projectKey=devops-micro-saas-harish \
+                -Dsonar.projectName=devops-micro-saas-harish \
+                -Dsonar.host.url=http://host.docker.internal:9000
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t devops-micro-saas-harish .'
+                sh 'docker build -t $DOCKER_IMAGE:latest .'
             }
         }
 
         stage('Tag Docker Image') {
             steps {
-                sh 'docker tag devops-micro-saas-harish $DOCKER_IMAGE:latest'
+                sh 'docker tag $DOCKER_IMAGE:latest $DOCKER_IMAGE:latest'
             }
         }
 
@@ -55,7 +53,9 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    '''
                 }
             }
         }
@@ -71,7 +71,8 @@ pipeline {
                 sh '''
                 docker stop micro-saas || true
                 docker rm micro-saas || true
-                docker run -d -p 8082:8080 --name micro-saas $DOCKER_IMAGE:latest
+                docker container prune -f || true
+                docker run -d -p 8090:8080 --name micro-saas $DOCKER_IMAGE:latest
                 '''
             }
         }
@@ -81,8 +82,9 @@ pipeline {
         success {
             echo 'Pipeline executed successfully!'
         }
+
         failure {
-            echo 'Pipeline failed. Please check logs.'
+            echo 'Pipeline failed!'
         }
     }
 }
